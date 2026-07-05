@@ -63,7 +63,7 @@ lazy val plugin = project
         case "2.12" =>
           "1.5.8"
         case _ =>
-          "2.0.0-RC12"
+          sbtVersion.value
       }
     },
     scriptedSbt := {
@@ -87,11 +87,13 @@ lazy val example = project
   .settings(
     publish / skip := true,
     Compile / mainClass := Some("example.Hello"),
-    test := {
-      val binary = nativeImage.value
+    testFull := Def.uncached {
+      val binary = fileConverter.value.toPath(nativeImage.value)
       val output = scala.sys.process.Process(List(binary.toString)).!!.trim
       assert(output == "List(1, 2, 3)", output)
+      TestResult.Passed
     },
+    test := testFull.value,
     scalacOptions ++= {
       scalaBinaryVersion.value match {
         case "2.12" =>
